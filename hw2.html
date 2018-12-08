@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html> 
+  <head> 
+        <meta charset="utf-8"> 
+        <title>hw2 王奕文 1500012961</title> 
+  </head> 
+  <body> 
+        <script src = "d3.min.js"></script>
+        <script src="d3.js"></script>
+
+        <a href="population.html">人口统计情况</a>
+        <a href="area.html">面积统计结果</a>
+        <a href="college.html">大学情况查询</a>
+        <a href="subway.html">地铁信息查询</a>
+        <a href="landscape.html">风景名胜查询</a> 
+        <a href="houseprice.html">房价情况查询</a>
+        <a href="salary.html">工资情况查询</a>
+        <a href="carpirce.html">出租车起步价查询</a>
+        <a href="history.html">历史古城</a>
+        <a href="GDP.html">2018上半年GDP汇总</a>
+        <a href="airport.html">机场数目统计</a>
+        <a href="forest.html">森林覆盖率</a>
+        <a href="old.html">老龄化指数</a>
+        <a href="airquality.html">空气质量统计</a>
+        <a href="parrellocation.html">平行坐标可视化结果</a> 
+        <a href="chinesemap.html">高铁路线图</a>
+        <a href="airchinamap.html">航空路线图</a>
+        <script>
+        
+        var width = 1200;
+        var height = 1200;
+        var svg = d3.select("body")
+                    .append("svg")
+                    .attr("width", width)
+                    .attr("height", height);
+        //var color = d3.scale.category10();
+        var color = d3.scale.category20();
+        /*svg.append("circle")
+            .attr("cx", "50px")
+            .attr("cy", "50px")
+            .attr("r", "50px")
+            .attr("fill", "yellow")
+        */
+      
+        var projection = d3.geo.mercator()
+                                .center([107, 31])
+                                .scale(800)
+                                .translate([width/2, height/2]);
+        var path = d3.geo.path()
+                .projection(projection);
+                d3.json("mymap.json", function(error, root) {
+                if (error) 
+                 return console.error(error);
+                console.log(root.features);
+				/*
+			d3.xml("southchinasea.svg", function(error, xmlDocument){
+				svg.append("g").html(function(d){
+					return d3.select(this).html() + xmlDocument.getElementsByTagName("g")[0].outerHTML;
+				})
+				var gSouthSea = d3.select("#southsea");
+                gSouthSea.attr("transform","translate(950,750) scale(0.85)")
+						.attr("class","southsea")
+						.attr("fill", "green");
+			});
+			*/
+				
+
+                svg.selectAll("path")
+                  .data( root.features )
+                  .enter()
+                  .append("path")
+                  .attr("stroke","#000")
+                  .attr("stroke-width",1)
+                  .attr("fill", function(d,i){
+					  	 //console.log(i);
+                         return color(i);
+                  })
+                  
+                  .attr("d", path )   //使用地理路径生成器
+                  .on("mouseover",function(d,i){
+                            d3.select(this)
+                                .attr("fill","red");
+							//alert(d.properties.name);
+                  
+				  })
+				   .on("click", function(d,i){
+					  // alert(d.properties.name);
+					
+				   
+				   })
+                   .on("mouseout",function(d,i){
+                         d3.select(this)
+                            .attr("fill",color(i));
+                  });
+
+				svg.selectAll("text")
+					.data(root.features)
+					.enter().append("svg:text")
+					.text(function (d, i) {
+						var cityname = ""
+						var cityid = d.properties.id;
+						/*if (cityid > 100 || cityid == 11 ||cityid == 12 || cityid ==31 || cityid == 50)
+							return d.properties.name;
+				
+						else return cityname;
+                        */
+                        return d.properties.name;
+						//console.log(d.properties.id);
+                
+            		})           
+					.attr("fill","black")
+ 		            .attr("x", function (d) {
+        		        var local = projection([d.properties.cp[0]-0.5, d.properties.cp[1]])
+                	return local[0]
+           		 })
+            .attr("y", function (d) {
+                var local = projection([d.properties.cp[0], d.properties.cp[1]-0.20])
+                return local[1]
+            })
+            .attr("fill", "black")
+			.style("font-family", "MicrosoftYaHei")
+            .style("font-size", "5px")
+			
+            });
+        </script>
+    </body> 
+</html>

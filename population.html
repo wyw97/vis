@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html> 
+  <head> 
+        <meta charset="utf-8"> 
+        <title>人口统计情况</title> 
+  </head> 
+  <body> 
+        <a href="hw2.html">返回</a>
+        <h1 align = center><b>20城市人口统计结果(单位：万人)</b></h1>
+        <script src = "d3.min.js"></script>
+        <script src="d3.js"></script>
+        
+        <script>
+        
+        var width = 1600;
+        var height = 1600;
+        var svg = d3.select("body")
+                    .append("svg")
+                    .attr("width", width)
+                    .attr("height", height);
+        var color = d3.scale.category20();
+        var green1 = d3.rgb(204, 255, 00);
+        var green2 = d3.rgb(204, 204, 00);
+        var green3 = d3.rgb(204, 153, 00)
+        var red3 = d3.rgb(204, 102, 00);
+        var red2 = d3.rgb(204, 51, 00);
+        var red1 = d3.rgb(204, 00, 00);
+        var white = d3.rgb(255, 255, 255);
+        var black = d3.rgb(00, 00, 00);
+        var yellow = d3.rgb(255, 255, 00);
+        var darkyellow = d3.rgb(255, 255, 224);
+        var projection = d3.geo.mercator()
+                                .center([97, 11])
+                                .scale(800)
+                                .translate([width/2, height/2]);
+        var padding = {top:20, right: 20, bottom: 520, left:420};
+        var path = d3.geo.path()
+                .projection(projection);
+        d3.json("mymap.json", function(error, root) {
+                if (error) 
+                 return console.error(error);
+                //console.log(root.features[0].properties);
+                
+                var featureLen = root.features.length;
+                //{id: "65", size: "550", name: "新疆维吾尔自治区", cp: Array(2), childNum: 18}
+                function cityInfo(){
+                    this.name = "";
+                    this.id = 0;
+                    this.pop = 0;
+                    this.area = 0;
+                    this.school = 0;
+                    this.subway = 0;
+                    this.land = 0;
+                    this.house = 0;
+                    this.sal = 0;
+                    this.taxi = 0;
+                    this.airgood = 0;
+                    this.airbad = 0;
+                    this.forest = 0;
+                    this.oldpeo = 0;
+                    this.history = 0;
+                    this.airport = 0;
+                    this.seaside = 0;
+                    this.gdp = 0;
+                }
+             /*   var popuvalue = [];//记录人口数量
+                var numcityid = [];
+                var numcityname = [];
+                var numcityarea = [];
+            */
+                var cntcty = 0;
+            
+                var tryres = [];
+            
+                for(var i = 0; i < featureLen; i++){
+                   // console.log(root.features[i].properties);
+                    var cityid = root.features[i].properties.id;
+                 
+                    if (cityid > 100 || cityid == 11 ||cityid == 12 || cityid ==31 || cityid == 50){
+                    var cityname = root.features[i].properties.name;
+                        
+                    var citypopulation = root.features[i].properties.pop;
+                    var cityarea = root.features[i].properties.area;
+                   /* numcityid[cntcty] = cityid;
+                    numcityname[cntcty] = cityname;
+                    numcityarea[cntcty] = cityarea;
+                    
+                    popuvalue[cntcty] = citypopulation;
+                    */
+                    var user = new cityInfo();
+                    user.name = cityname;
+                    user.pop = citypopulation;
+                    user.id = cityid;
+                    user.area = cityarea;
+                    user.school = root.features[i].properties.univer;
+                    user.subway = eval(root.features[i].properties.subway);
+                    landres = root.features[i].properties.landscape.split('+');
+                    if(landres[1]){
+                        user.land = landres[0] + landres[1];
+                    }
+                    else
+                        user.land = landres[0];
+                    user.house = root.features[i].properties.houseprice;
+                    user.sal = root.features[i].properties.salary;
+                    user.taxi = root.features[i].properties.car;
+                    strair = root.features[i].properties.airquality.split('+');
+                    user.airgood = strair[0];
+                    user.airbad = strair[1];
+                    user.forest = root.features[i].properties.forest;
+                    user.oldpeo = root.features[i].properties.oldman;
+                    user.history = root.features[i].properties.oldcity;
+                    user.airport = root.features[i].properties.airport;
+                    strsea = root.features[i].properties.seaside;
+                    user.seaside = (strsea == "是")?1:0;
+                    user.gdp = root.features[i].properties.GDP;
+                    
+                    tryres[cntcty] = user;
+                    console.log(user);
+                    cntcty++;
+                    }
+                    else continue;
+                }
+			    //定义一个线性比例尺;
+            function mycmp(prop){
+                return function(a, b){
+                    var value1 = a[prop];
+                    var value2 = b[prop];
+                    return value1 - value2;
+                }
+            }
+            console.log(cntcty);
+            tryres.sort(mycmp('pop'));
+            console.log(tryres);
+            //var minivalue = Math.min.apply(null, popuvalue);
+            //var maxnvalue = Math.max.apply(null, popuvalue);
+            var minivalue = tryres[0].pop;
+            var maxnvalue = tryres[cntcty-1].pop;
+
+            console.log(minivalue, maxnvalue);
+            //console.log(popuvalue);
+            //var minivalue = popuvalue[0];
+            //var maxnvalue = popuvalue[lenIndex - 1];
+            var linearScale = d3.scale.linear()
+                                        .domain([minivalue, maxnvalue])
+                                        .range([0, 1]);
+            var computeColor = d3.interpolate(green1, red1);
+
+                svg.selectAll("path")
+                  .data( root.features )
+                  .enter()
+                  .append("path")
+                  .attr("stroke","#000")
+                  .attr("stroke-width",1)
+                  .attr("fill", function(d,i){
+					  	 //console.log(i);
+                    var cityid = d.properties.id;
+                    var popu = d.properties.pop;
+                    if (cityid > 100 || cityid == 11 ||cityid == 12 || cityid ==31 || cityid == 50){
+/*
+                        if(popu > 2000) return red1;
+                        else if(popu > 1500) return red2;
+                        else if(popu > 1200) return red3;
+                        else if(popu > 900) return green3;
+                        else if(popu > 600) return green2;
+                        else return green1;
+*/
+                        var t = linearScale(popu);
+                        var color = computeColor(t);
+                        return color.toString();
+                    }
+
+                    else  
+                       return darkyellow;
+                         //return color(0);
+                  })
+                  
+                  .attr("d", path )   //使用地理路径生成器
+                  .on("mouseover",function(d,i){
+                            //d3.select(this)
+                            //    .attr("fill","red");
+							//alert(d.properties.name);
+                            
+                  
+				  })
+				   .on("click", function(d,i){
+                        var cityid = d.properties.id;
+                             if (cityid > 100 || cityid == 11 ||cityid == 12 || cityid ==31 || cityid == 50){
+                                alert("城市："+d.properties.name+"\n人口："+d.properties.pop+"万人\n面积："+d.properties.area+"平方千米\n");
+                            }
+					
+				   
+				   })
+                   .on("mouseout",function(d,i){
+                    var cityid = d.properties.id;
+                    var popu = d.properties.pop;
+                    if (cityid > 100 || cityid == 11 ||cityid == 12 || cityid ==31 || cityid == 50){
+/*
+                        if(popu > 2000) return red1;
+                        else if(popu > 1500) return red2;
+                        else if(popu > 1200) return red3;
+                        else if(popu > 900) return green3;
+                        else if(popu > 600) return green2;
+                        else return green1;
+*/
+                        var t = linearScale(popu);
+                        var color = computeColor(t);
+                        return color.toString();
+                    }
+
+                    else  
+                       return darkyellow;
+                         //return color(0);
+                  });
+
+				svg.selectAll("text")
+					.data(root.features)
+					.enter().append("svg:text")
+					.text(function (d, i) {
+						var cityname = ""
+						var cityid = d.properties.id;
+						/*
+                        if (cityid > 100 || cityid == 11 ||cityid == 12 || cityid ==31 || cityid == 50)
+							return d.properties.name;
+				
+						else return cityname;
+                        */
+                        return d.properties.name;
+						//console.log(d.properties.id);
+                
+            		})           
+					.attr("fill","black")
+ 		            .attr("x", function (d) {
+        		        var local = projection([d.properties.cp[0]-0.5, d.properties.cp[1]])
+                	return local[0];
+           		 })
+            .attr("y", function (d) {
+                var local = projection([d.properties.cp[0], d.properties.cp[1]-0.20])
+                return local[1];
+            })
+            .attr("fill", "green")
+			.style("font-family", "MicrosoftYaHei")
+            .style("font-size", "6px");
+			
+            var defs = svg.append("defs");
+            var linearGradient = defs.append("linearGradient")
+                                     .attr("id", "linearColor")
+                                     .attr("x1", "0%")
+                                     .attr("y1", "0%")
+                                     .attr("x2", "100%")
+                                     .attr("y2", "0%");
+            var stop1 = linearGradient.append("stop")
+                                        .attr("offset", "0%")
+                                        .attr("stop-color", green1.toString());
+            var stop2 = linearGradient.append("stop")
+                                        .attr("offset", "100%")
+                                        .attr("stop-color", red1.toString());
+
+             var colorRect = svg.append("rect")
+                                .attr("x", 525)
+                                .attr("y", 650)
+                                .attr("width", 140)
+                                .attr("height", 30)
+                                .style("fill", "url(#" +
+                                linearGradient.attr("id")+")");
+            
+            var minvalueText = svg.append("text")
+                                  .attr("class", "valueText")
+                                  .attr("x", 505)
+                                  .attr("y", 650)
+                                  .attr("dy", "-0.3em")
+                                  .text(function(){
+                                      return minivalue;
+                                  });
+
+            var maxvalueText = svg.append("text")
+                                  .attr("class", "valueText")
+                                  .attr("x", 645)
+                                  .attr("y", 650)
+                                  .attr("dy", "-0.3em")
+                                  .text(function(){
+                                      return maxnvalue;
+                                  });
+
+            var dataset = [];
+            function barinfo(){
+                this.name = 0;
+                this.popu = 0;
+            }
+            var tempUsr = new barinfo();
+            dataset[0] = tempUsr;
+            for(var i = 1; i <= cntcty; i++){
+                var tempUsr = new barinfo();
+                tempUsr.name = tryres[i-1].name;
+                tempUsr.popu = tryres[i-1].pop;
+                dataset[i] = tempUsr;
+            }
+            dataset.sort(mycmp("pop"));
+            cityNameSet = [];
+            cityPopulationSet = [];
+            for(var i = 0; i < cntcty; i++){
+                cityNameSet[i] = dataset[i].name;
+                cityPopulationSet[i] = dataset[i].popu;
+            }
+            console.log(dataset);
+            //var rectStep = 60;
+            //var rectWidth = 60;
+
+            
+            
+            var xAxisWidth = 1000;
+            var yAxisWidth = 300;
+
+            var xScale = d3.scale.ordinal()
+                     .domain(d3.range(21))
+                     .rangeRoundBands([0, xAxisWidth],0.1);
+
+            // y轴的比例尺
+            var yScale = d3.scale.linear()
+                    .domain([0, maxnvalue])
+                    .range([0, yAxisWidth]);
+            
+            var rect = svg.selectAll("rect")
+              .data(dataset)
+              .enter()  //获取enter部分
+              .append("rect")   //添加rect元素，使其与绑定数组的长度一致
+              .attr("fill","steelblue")
+              .attr("x",function(d,i){  //设置X坐标
+                  return padding.left+ xScale(i);
+              })
+              .attr("y",function(d,i){  //设置Y坐标
+                  console.log(d.name, d.popu);
+                  return height - padding.bottom - yScale(d.popu);
+              })
+              .attr("width",xScale.rangeBand())  //设置矩形宽度，之前定义的
+              .attr("height",function(d){   //设置矩形高度，即为数组中的各项值
+                  console.log(d);
+                  return yScale(d.popu);
+              });
+
+            var text = svg.selectAll(text)
+                .data(dataset)
+                .enter()
+                .append("text")
+                .attr("fill","red")
+                .attr("font-size","8px")
+                .attr("text-anchor","middle")
+                .attr("x",function(d,i){    //与矩形的X坐标一样
+                    return padding.left + xScale(i);
+                })
+                .attr("y",function(d){
+                    console.log(d);
+                    v = height - padding.bottom;
+                    return height - padding.bottom - yScale(d.popu) - 10;
+                })
+                .attr('dx', xScale.rangeBand()/2)    //x轴相对平移距离
+                .attr('dy', "1em")  //em单位表示的是当前文字所占一行的高度
+                .text(function(d){  //要显示的文字内容
+                    if(eval(d.popu) == 0.0) return "";
+                    else return d.name+"  \n "+d.popu;   
+                });
+
+
+
+            var xAxis = d3.svg.axis()
+                        .scale(xScale)
+                        .orient("bottom");
+            yScale.range([yAxisWidth,0]);
+            var yAxis = d3.svg.axis()
+                        .scale(yScale)
+                        .orient("left");
+
+            svg.append("g")
+              .attr("class","axis")
+              .attr("transform","translate(" + padding.left + "," + (height - padding.bottom) + ")")
+              .call(xAxis);
+
+            svg.append("g")
+              .attr("class","axis")
+              .attr("transform","translate(" + padding.left + "," + (height - padding.bottom- yAxisWidth) + ")")
+              .call(yAxis);
+
+});
+
+
+        </script>
+    
+    </body>
+</html>t>
